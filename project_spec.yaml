@@ -1,0 +1,72 @@
+
+project_name: "College Balanza"
+project_description: "A web platform for comparing colleges based on various criteria like placements, location, faculty review, fees, ROI, industry value, and brand value. It will fetch details from web sources and integrate an LLM for comparison oversight."
+
+capstone_project_details:
+  course: "KAGGLE X GOOGLE 5-DAY INTENSIVE COURSE"
+  evaluation_requirement: "Build an AI agent using concepts, tools, and best practices learned in the course."
+  submission_requirements:
+    - "Kaggle Writeup (max 2,500 words)"
+    - "Media Gallery (images/videos)"
+    - "Attached Public Video (5 mins max, YouTube)"
+    - "Attached Project Link (publicly accessible product/demo or GitHub repo with setup instructions)"
+  evaluation_criteria:
+    category_1_the_pitch:
+      total_points: 30
+      criteria:
+        core_concept_value: 10
+        youtube_video_submission: 10
+        writeup: 10
+    category_2_the_implementation:
+      total_points: 70
+      criteria:
+        technical_implementation: 50
+        documentation: 20
+  key_concepts_to_apply:
+    - "Agent / Multi-agent system (ADK)"
+    - "MCP Server"
+    - "Antigravity"
+    - "Security features"
+    - "Deployability"
+    - "Agent skills (e.g., Agents CLI)"
+
+website_features:
+  homepage:
+    description: "Home page with motion graphic similar to steep.app (Floating product card)"
+    reference: "https://steep.app/"
+  theme_toggle:
+    description: "Toggle dark/light mode on each webpage, with choice carried across the website."
+  responsiveness: "Works across all devices and major browsers."
+  comparison_page:
+    description: "Comparison webpage with Table Accordion, Collapse Cards, Tiles Button Slider Navigation Bar, Footer, Icon Button, Dropdown, Switch & Toggle, Text Field, Navigation Bar, Footer, Currency."
+    references:
+      - "https://whereby.com/information/embedded/pricing"
+      - "https://resend.com/pricing"
+  components_integration: "Will include components from componentry.fun/docs."
+  user_management:
+    authentication: "UUID for userbase (avoiding Google/GitHub OAuth complexity)"
+    database: "Supabase for DB management"
+    privacy_policy: "Dedicated privacy policy webpage matching website aesthetics."
+
+technical_requirements:
+  data_fetching: "Fetch details from various web sources (college websites, Quora, Google reviews, Reddit, etc.)"
+  mcp_integration: "Custom MCP for data fetching and processing."
+  llm_integration: "Integrate an LLM for overseeing comparison procedures."
+  llm_for_code: "Use Agy/Gemini for code generation (open to suggestions)."
+  deployment: "Vercel for deployment."
+  database: "Supabase for database."
+  cloud_platform: "Free tier Google Cloud Project."
+  llm_access:
+    - "Provider-agnostic LLM access"
+
+guardrails_and_development_principles:
+  - "Minimal hallucination."
+  - "Proper guardrails setup."
+  - "Avoiding context rot and context drought."
+  - "No security shortcomings."
+  - "Website should not look vibe coded (references from refero can be provided)."
+  - "Avoiding confused deputy problem."
+  - "Focus on spec-driven development."
+  - "Project data (guidelines, guardrails) in YAML format for better parsing by Antigravity."
+  - "Prompting in behavior-driven development (BDD) using Gherkin syntax."
+  - "Zero trust development; guardrails are not optional, LLMs are probabilistic tools."

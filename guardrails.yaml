@@ -1,0 +1,43 @@
+
+guardrails:
+  - id: minimal_hallucination
+    description: "Ensure LLM outputs are factual and minimize speculative or incorrect information."
+    implementation_guidance: "Implement robust prompt engineering, fact-checking mechanisms, and confidence scoring for LLM responses."
+  - id: proper_guardrails_setup
+    description: "Establish and enforce clear boundaries and constraints for AI agent behavior."
+    implementation_guidance: "Define explicit rules for data access, LLM interaction, and system actions. Regularly review and update guardrails."
+  - id: avoid_context_rot_drought
+    description: "Maintain relevant context for AI agents while avoiding overwhelming them with excessive or irrelevant information."
+    implementation_guidance: "Implement context management strategies, including summarization, retrieval-augmented generation (RAG), and dynamic context window adjustments."
+  - id: no_security_shortcomings
+    description: "Prevent vulnerabilities and ensure the system is secure against attacks."
+    implementation_guidance: "Follow secure coding practices, implement authentication (UUID-based), authorization, input validation, and regular security audits. Avoid hardcoding API keys."
+  - id: no_vibe_coded_website
+    description: "Ensure the website has a professional and polished appearance, avoiding a hastily or unprofessionally designed look."
+    implementation_guidance: "Utilize established UI/UX design principles, design systems, and component libraries (e.g., Componentry.fun). Incorporate user feedback for design iterations."
+  - id: avoid_confused_deputy_problem
+    description: "Mitigate risks where a privileged entity (deputy) is tricked into misusing its authority on behalf of a less-privileged entity."
+    implementation_guidance: "Implement strict access controls, principle of least privilege, and clear separation of concerns between different system components and agents."
+  - id: spec_driven_development
+    description: "Develop the project based on clear, detailed specifications and requirements."
+    implementation_guidance: "Maintain up-to-date project specifications (e.g., in YAML format) and ensure all development aligns with these specifications. Use automated testing to verify compliance."
+  - id: bdd_gherkin_prompting
+    description: "Use Behavior-Driven Development (BDD) with Gherkin syntax for prompting AI agents."
+    implementation_guidance: "Structure prompts using Given-When-Then format to clearly define desired behaviors, preconditions, and outcomes for agent interactions."
+  - id: zero_trust_development
+    description: "Adopt a security model that assumes no implicit trust and requires verification for every access attempt."
+    implementation_guidance: "Implement continuous verification, least privilege access, and micro-segmentation. Treat all LLM outputs and external data as potentially untrusted."
+guardrails_version: "1.0"
+public_repository_disclaimer: |
+  This repository is an educational capstone project.
+  The contents are shared for learning purposes only and are
+  not intended for production deployment.
+
+development_principles:
+  - "Spec-driven development: All features and functionalities must be clearly defined in specifications before implementation."
+  - "Behavior-driven development (BDD): Use Gherkin syntax for defining features and scenarios, especially for AI agent interactions."
+  - "Zero-trust security: Implement security measures assuming no implicit trust, requiring verification for every interaction."
+  - "Modularity: Design components to be independent and reusable."
+  - "Scalability: Ensure the architecture can handle increased load and data volume."
+  - "Maintainability: Write clean, well-documented code that is easy to understand and modify."
+  - "User-centric design: Prioritize user experience and feedback throughout the development process."
