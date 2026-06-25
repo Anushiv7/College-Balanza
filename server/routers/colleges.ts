@@ -1,27 +1,29 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { createComparison, getAllColleges, getCollegeByName, getUserComparisons, upsertCollege } from "../db";
+import { anonymousProcedure, publicProcedure, router } from "../_core/trpc";
+import {
+  createComparison,
+  getAllColleges,
+  getAnonymousComparisons,
+  getCollegeByName,
+  upsertCollege,
+} from "../db";
 import { invokeLLM } from "../_core/llm";
 
 export const collegesRouter = router({
-  // Get all colleges
   getAll: publicProcedure.query(async () => {
     return await getAllColleges();
   }),
 
-  // Get college by name
   getByName: publicProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ input }) => {
       return await getCollegeByName(input.name);
     }),
 
-  // Fetch college data from web sources using LLM
   fetchCollegeData: publicProcedure
     .input(z.object({ collegeName: z.string() }))
     .mutation(async ({ input }) => {
       try {
-        // Use LLM to fetch and normalize college data
         const response = await invokeLLM({
           messages: [
             {
@@ -72,9 +74,9 @@ export const collegesRouter = router({
         const content = response.choices[0]?.message.content;
         if (!content) throw new Error("No response from LLM");
 
-        const collegeData = typeof content === "string" ? JSON.parse(content) : content;
+        const collegeData =
+          typeof content === "string" ? JSON.parse(content) : content;
 
-        // Upsert college data into database
         const savedCollege = await upsertCollege({
           name: input.collegeName,
           ...collegeData,
@@ -87,26 +89,25 @@ export const collegesRouter = router({
       }
     }),
 
-  // Generate comparison summary using LLM
-  generateComparison: protectedProcedure
+  // Generate comparison summary using the LLM. Persisted against the
+  // anonymous browser session so history can be retrieved later.
+  generateComparison: anonymousProcedure
     .input(
       z.object({
         collegeIds: z.array(z.number()),
         collegeNames: z.array(z.string()),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        // Fetch college data
         const colleges = await Promise.all(
-          input.collegeNames.map((name) => getCollegeByName(name))
+          input.collegeNames.map((name) => getCollegeByName(name)),
         );
 
-        // Generate LLM comparison summary
         const collegeDataStr = colleges
           .map(
             (c) =>
-              `${c?.name}: Placements: ${c?.placements}, Location: ${c?.location}, Faculty: ${c?.facultyReview}, Fees: ${c?.fees}, ROI: ${c?.roi}`
+              `${c?.name}: Placements: ${c?.placements}, Location: ${c?.location}, Faculty: ${c?.facultyReview}, Fees: ${c?.fees}, ROI: ${c?.roi}`,
           )
           .join("\n");
 
@@ -130,26 +131,22 @@ export const collegesRouter = router({
             ? response.choices[0]?.message.content
             : JSON.stringify(response.choices[0]?.message.content);
 
-        // Save comparison to database
-        const comparison = await createComparison({
-          userId: ctx.user.id,
-          anonymousId: ctx.anonymousId ?? 'anonymous',
+        await createComparison({
+          anonymousId: ctx.anonymousId,
           collegeIds: input.collegeIds,
           summary,
           comparisonData: collegeDataStr,
         });
 
-        return {
-          summary,
-        };
+        return { summary };
       } catch (error) {
         console.error("Error generating comparison:", error);
         throw new Error("Failed to generate comparison");
       }
     }),
 
-  // Get user's comparison history
-  getUserHistory: protectedProcedure.query(async ({ ctx }) => {
-    return await getUserComparisons(ctx.user.id);
+  // History scoped to the anonymous browser session (cb_anon_id cookie).
+  getHistory: anonymousProcedure.query(async ({ ctx }) => {
+    return await getAnonymousComparisons(ctx.anonymousId);
   }),
 });

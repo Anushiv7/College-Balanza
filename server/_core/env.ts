@@ -1,10 +1,18 @@
+/**
+ * Centralised, server-side environment configuration.
+ * Read process.env once here so the rest of the codebase has a typed surface.
+ */
 export const ENV = {
-  appId: process.env.VITE_APP_ID ?? "",
-  cookieSecret: process.env.JWT_SECRET ?? "",
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
-  ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",
-  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  databaseUrl: process.env.DATABASE_URL ?? "",
+
+  // OpenAI-compatible LLM endpoint (OpenAI, Groq, OpenRouter, Together, …).
+  openAiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openAiBaseUrl:
+    process.env.OPENAI_BASE_URL?.replace(/\/+$/, "") ??
+    "https://api.openai.com/v1",
+  openAiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+
+  // Optional override for the anonymous-id cookie name.
+  anonCookieName: process.env.ANON_COOKIE_NAME ?? "cb_anon_id",
 };

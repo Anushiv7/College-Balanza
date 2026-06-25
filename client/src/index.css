@@ -147,14 +147,30 @@
 /* Immersive gradient background */
 html {
   scroll-behavior: smooth;
-  background: linear-gradient(135deg, #1a0a3e 0%, #0f2c4a 50%, #0a4d3c 100%);
+  background: linear-gradient(135deg, #f5f3ff 0%, #e8f4f8 50%, #e8f5f1 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
-html.light {
-  background: linear-gradient(135deg, #f5f3ff 0%, #e8f4f8 50%, #e8f5f1 100%);
+html.dark {
+  background: linear-gradient(135deg, #1a0a3e 0%, #0f2c4a 50%, #0a4d3c 100%);
 }
+
+/* Light mode: components hardcode text-white for the dark gradient backdrop.
+   Remap those utilities to readable foreground colors when .dark is absent. */
+html:not(.dark) .text-white { color: hsl(var(--foreground)); }
+html:not(.dark) .text-white\/90 { color: hsl(var(--foreground) / 0.9); }
+html:not(.dark) .text-white\/80 { color: hsl(var(--foreground) / 0.8); }
+html:not(.dark) .text-white\/70 { color: hsl(var(--muted-foreground)); }
+html:not(.dark) .text-white\/60 { color: hsl(var(--muted-foreground)); }
+html:not(.dark) .text-white\/50 { color: hsl(var(--muted-foreground) / 0.8); }
+html:not(.dark) .border-white\/20 { border-color: hsl(var(--border)); }
+html:not(.dark) .border-white\/10 { border-color: hsl(var(--border)); }
+html:not(.dark) .bg-white\/10 { background-color: hsl(var(--muted)); }
+html:not(.dark) .bg-white\/5 { background-color: hsl(var(--muted) / 0.5); }
+html:not(.dark) .hover\:bg-white\/10:hover { background-color: hsl(var(--muted)); }
+html:not(.dark) .placeholder-white\/50::placeholder { color: hsl(var(--muted-foreground)); }
+
 
 /* Remove default scrollbar styling for better aesthetics */
 ::-webkit-scrollbar {

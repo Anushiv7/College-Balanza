@@ -1,13 +1,17 @@
-import { eq, desc, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { InsertUser, users, colleges, comparisons, InsertCollege } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  colleges,
+  comparisons,
+  InsertCollege,
+  users,
+} from "../drizzle/schema";
 import { MAX_COMPARISON_HISTORY } from "./_core/constants";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+/** Lazily connect so local tooling can run without DATABASE_URL set. */
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -21,90 +25,39 @@ export async function getDb() {
   return _db;
 }
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
+/** Upsert (insert or refresh lastSeenAt) for an anonymous user. */
+export async function upsertAnonymousUser(anonId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
-
+  if (!db) return undefined;
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    // PostgreSQL upsert: ON CONFLICT (openId) DO UPDATE
-    await db.insert(users).values(values).onConflictDoUpdate({
-      target: users.openId,
-      set: updateSet as Partial<InsertUser>,
-    });
+    await db
+      .insert(users)
+      .values({ id: anonId })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: { lastSeenAt: new Date() },
+      });
+    const rows = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, anonId))
+      .limit(1);
+    return rows[0];
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
-}
-
-export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
+    console.error("[Database] Failed to upsert anonymous user:", error);
     return undefined;
   }
-
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getCollegeByName(name: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(colleges).where(eq(colleges.name, name)).limit(1);
+  const result = await db
+    .select()
+    .from(colleges)
+    .where(eq(colleges.name, name))
+    .limit(1);
   return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getComparisonsByAnonymousId(anonId: string) {
-  const db = await getDb();
-  if (!db) return [];
-  return await db.select().from(comparisons).where(eq(comparisons.anonymousId, anonId));
 }
 
 export async function getAllColleges() {
@@ -117,20 +70,23 @@ export async function upsertCollege(college: InsertCollege) {
   const db = await getDb();
   if (!db) return undefined;
   try {
-    await db.insert(colleges).values(college).onConflictDoUpdate({
-      target: colleges.name,
-      set: {
-        placements: college.placements,
-        location: college.location,
-        facultyReview: college.facultyReview,
-        fees: college.fees,
-        roi: college.roi,
-        industryValue: college.industryValue,
-        brandValue: college.brandValue,
-        collegeLife: college.collegeLife,
-        lastUpdated: new Date(),
-      },
-    });
+    await db
+      .insert(colleges)
+      .values(college)
+      .onConflictDoUpdate({
+        target: colleges.name,
+        set: {
+          placements: college.placements,
+          location: college.location,
+          facultyReview: college.facultyReview,
+          fees: college.fees,
+          roi: college.roi,
+          industryValue: college.industryValue,
+          brandValue: college.brandValue,
+          collegeLife: college.collegeLife,
+          lastUpdated: new Date(),
+        },
+      });
     return await getCollegeByName(college.name);
   } catch (error) {
     console.error("[Database] Failed to upsert college:", error);
@@ -138,14 +94,17 @@ export async function upsertCollege(college: InsertCollege) {
   }
 }
 
-export async function getUserComparisons(userId: number) {
+export async function getAnonymousComparisons(anonId: string) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(comparisons).where(eq(comparisons.userId, userId));
+  return await db
+    .select()
+    .from(comparisons)
+    .where(eq(comparisons.anonymousId, anonId))
+    .orderBy(desc(comparisons.createdAt));
 }
 
 export async function createComparison(params: {
-  userId?: number;
   anonymousId: string;
   collegeIds: number[];
   summary: string;
@@ -157,7 +116,6 @@ export async function createComparison(params: {
 
   try {
     return await db.transaction(async (tx) => {
-      // Use createdAt for chronological ordering (exists in schema)
       const existing = await tx
         .select({ id: comparisons.id })
         .from(comparisons)
@@ -166,9 +124,7 @@ export async function createComparison(params: {
 
       const excess = existing.length - MAX_COMPARISON_HISTORY + 1;
       if (excess > 0) {
-        const idsToDelete = existing
-          .slice(-excess)
-          .map((row) => row.id);
+        const idsToDelete = existing.slice(-excess).map((row) => row.id);
         await tx
           .delete(comparisons)
           .where(inArray(comparisons.id, idsToDelete));
@@ -177,7 +133,6 @@ export async function createComparison(params: {
       const [newRow] = await tx
         .insert(comparisons)
         .values({
-          userId: params.userId,
           anonymousId: params.anonymousId,
           collegeIds: JSON.stringify(params.collegeIds),
           summary: params.summary,
@@ -193,5 +148,3 @@ export async function createComparison(params: {
     throw error;
   }
 }
-
-// TODO: add feature queries here as your schema grows.

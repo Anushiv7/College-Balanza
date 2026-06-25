@@ -212,13 +212,12 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+// OpenAI-compatible endpoint. Works with OpenAI, Groq, OpenRouter, Together,
+// vLLM, LM Studio, Ollama (with the /v1 shim) and most other gateways.
+const resolveApiUrl = () => `${ENV.openAiBaseUrl}/chat/completions`;
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
+  if (!ENV.openAiApiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
 };
@@ -362,9 +361,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     messages: messages.map(normalizeMessage),
   };
 
-  if (model) {
-    payload.model = model;
-  }
+  payload.model = model ?? ENV.openAiModel;
 
   if (tools && tools.length > 0) {
     payload.tools = tools;
@@ -405,7 +402,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${ENV.openAiApiKey}`,
     },
     body: JSON.stringify(payload),
   });
@@ -435,12 +432,10 @@ export type ModelsResponse = {
 export async function listLLMModels(): Promise<ModelsResponse> {
   assertApiKey();
 
-  const url = ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/models`
-    : "https://forge.manus.im/v1/models";
+  const url = `${ENV.openAiBaseUrl}/models`;
 
   const response = await fetchWithBackoff(url, {
-    headers: { authorization: `Bearer ${ENV.forgeApiKey}` },
+    headers: { authorization: `Bearer ${ENV.openAiApiKey}` },
   });
 
   if (!response.ok) {
