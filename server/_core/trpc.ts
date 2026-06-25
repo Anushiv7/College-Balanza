@@ -10,6 +10,20 @@ const t = initTRPC.context<TrpcContext>().create({
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
+export const anonymousProcedure = t.procedure.use(
+  t.middleware(async ({ ctx, next }) => {
+    if (!ctx.anonymousId) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Anonymous ID missing" });
+    }
+    return next({
+      ctx: {
+        ...ctx,
+        anonymousId: ctx.anonymousId,
+      },
+    });
+  })
+);
+
 const requireUser = t.middleware(async opts => {
   const { ctx, next } = opts;
 
