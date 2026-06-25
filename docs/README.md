@@ -125,7 +125,7 @@ Required environment variables:
 
 ## Acknowledgements
 
-Initial project scaffolding and portions of the infrastructure migration were assisted using Loveable.dev.
+Initial project scaffolding and portions of the infrastructure migration were assisted using Manus.im and Loveable.dev.
 The overall application architecture, feature development, deployment, and ongoing maintenance are the work of Anushiv Prakash.
 ## License
 
