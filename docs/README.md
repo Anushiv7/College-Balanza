@@ -14,11 +14,11 @@ The long-term goal is to provide transparent, data-driven college comparisons in
 
 ### ☀️ Light Mode
 
-![Light Mode](docs/assets/homepage1.png)
+![Light Mode](assets/homepage1.png)
 
 ### 🌙 Dark Mode
 
-![Dark Mode](docs/assets/homepage2.png)
+![Dark Mode](assets/homepage2.png)
 ## Features
 
 * **Side-by-side college comparison**
