@@ -127,7 +127,7 @@ Required environment variables:
 
 Initial project scaffolding and portions of the infrastructure migration were assisted using Manus.im and Loveable.dev.
 
-The overall application architecture, feature development, deployment, and ongoing maintenance are the work of Anushiv Prakash.
+The overall application architecture,feature development,deployment,debugging,and ongoing maintenance are carried out by Anushiv Prakash.
 ## License
 
 Licensed under the MIT License.
