@@ -1,6 +1,6 @@
 # College Balanza
 
-AI-powered college comparison platform built by **Anushiv Prakash** as the capstone project for the **Kaggle × Google 5-Day Intensive Course**.
+AI-powered college comparison platform developed by **Anushiv Prakash** as the capstone project for the **Kaggle × Google 5-Day Intensive Course**.
 
 ## Project Overview
 
@@ -9,6 +9,10 @@ College Balanza helps students compare colleges side-by-side using structured da
 ⚠️ This project is currently under active development. Features and data sources are being expanded as part of the Kaggle × Google 5-Day Intensive capstone.
 
 The long-term goal is to provide transparent, data-driven college comparisons instead of relying on scattered information across multiple websites.
+
+## Preview
+
+![College Balanza](docs/assets/homepage.png)
 
 ## Features
 
@@ -116,8 +120,8 @@ Required environment variables:
 
 ## Acknowledgements
 
-Initial project scaffolding and portions of the infrastructure migration were assisted using Loveable.dev. The overall application architecture, feature development, deployment, debugging, and ongoing maintenance are developed and maintained by Anushiv Prakash.
-
+Initial project scaffolding and portions of the infrastructure migration were assisted using Loveable.dev.
+The overall application architecture, feature development, deployment, and ongoing maintenance are the work of Anushiv Prakash.
 ## License
 
 Licensed under the MIT License.
