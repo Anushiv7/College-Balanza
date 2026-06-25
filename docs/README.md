@@ -12,7 +12,9 @@ The long-term goal is to provide transparent, data-driven college comparisons in
 
 ## Preview
 
-![College Balanza](docs/assets/homepage.png)
+| Light Mode | Dark Mode |
+|------------|-----------|
+| ![Light Mode](docs/assets/homepage-light.png) | ![Dark Mode](docs/assets/homepage-dark.png) |
 
 ## Features
 
