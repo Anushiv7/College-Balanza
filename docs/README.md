@@ -6,6 +6,8 @@ AI-powered college comparison platform built by **Anushiv Prakash** as the capst
 
 College Balanza helps students compare colleges side-by-side using structured data and AI-powered insights. The platform aggregates information from official sources and trusted public platforms to compare colleges across placements, fees, faculty, ROI, industry value, campus life, and more.
 
+⚠️ This project is currently under active development. Features and data sources are being expanded as part of the Kaggle × Google 5-Day Intensive capstone.
+
 The long-term goal is to provide transparent, data-driven college comparisons instead of relying on scattered information across multiple websites.
 
 ## Features
@@ -16,7 +18,7 @@ The long-term goal is to provide transparent, data-driven college comparisons in
 * **Modern responsive UI with Dark/Light mode**
 * **Anonymous UUID-based sessions**
 * **Privacy-focused architecture**
-* **Fast deployment on Vercel**
+* **Deployed on Vercel**
 
 ## Tech Stack
 
@@ -58,7 +60,7 @@ The platform uses Large Language Models to:
 * Generate comparison summaries
 * Explain trade-offs between colleges
 * Synthesize large amounts of information
-* Assist users in making informed decisions
+* Provide data-driven comparison insights to assist decision-making.
 
 AI responses are designed to supplement—not replace—source data.
 
@@ -114,9 +116,7 @@ Required environment variables:
 
 ## Acknowledgements
 
-Initial project scaffolding and portions of the infrastructure migration were assisted using **Loveable.dev**.
-
-The application architecture, backend migration, customization, deployment, debugging, and ongoing development are maintained by **Anushiv Prakash**.
+Initial project scaffolding and portions of the infrastructure migration were assisted using Loveable.dev. The overall application architecture, feature development, deployment, debugging, and ongoing maintenance are developed and maintained by Anushiv Prakash.
 
 ## License
 
