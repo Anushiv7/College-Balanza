@@ -133,8 +133,10 @@ export const collegesRouter = router({
         // Save comparison to database
         const comparison = await createComparison({
           userId: ctx.user.id,
-          collegeIds: JSON.stringify(input.collegeIds),
+          anonymousId: ctx.anonymousId ?? 'anonymous',
+          collegeIds: input.collegeIds,
           summary,
+          comparisonData: collegeDataStr,
         });
 
         return {

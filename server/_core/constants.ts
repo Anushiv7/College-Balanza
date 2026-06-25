@@ -1,0 +1,1 @@
+export const MAX_COMPARISON_HISTORY = 10;

@@ -15,6 +15,20 @@
       "when": 1782332028306,
       "tag": "0001_certain_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1782406049879,
+      "tag": "0002_sweet_hellcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782406759874,
+      "tag": "0003_smart_khan",
+      "breakpoints": true
     }
   ]
 }

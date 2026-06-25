@@ -1,7 +1,9 @@
-import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, colleges, comparisons, InsertCollege, InsertComparison } from "../drizzle/schema";
+import { eq, desc, inArray } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { InsertUser, users, colleges, comparisons, InsertCollege } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { MAX_COMPARISON_HISTORY } from "./_core/constants";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -9,7 +11,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -68,8 +71,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
+    // PostgreSQL upsert: ON CONFLICT (openId) DO UPDATE
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
+      set: updateSet as Partial<InsertUser>,
     });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
@@ -96,6 +101,12 @@ export async function getCollegeByName(name: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getComparisonsByAnonymousId(anonId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(comparisons).where(eq(comparisons.anonymousId, anonId));
+}
+
 export async function getAllColleges() {
   const db = await getDb();
   if (!db) return [];
@@ -106,7 +117,8 @@ export async function upsertCollege(college: InsertCollege) {
   const db = await getDb();
   if (!db) return undefined;
   try {
-    await db.insert(colleges).values(college).onDuplicateKeyUpdate({
+    await db.insert(colleges).values(college).onConflictDoUpdate({
+      target: colleges.name,
       set: {
         placements: college.placements,
         location: college.location,
@@ -132,12 +144,50 @@ export async function getUserComparisons(userId: number) {
   return await db.select().from(comparisons).where(eq(comparisons.userId, userId));
 }
 
-export async function createComparison(comparison: InsertComparison) {
+export async function createComparison(params: {
+  userId?: number;
+  anonymousId: string;
+  collegeIds: number[];
+  summary: string;
+  comparisonData: string;
+  llmProvider?: string;
+}) {
   const db = await getDb();
   if (!db) return undefined;
+
   try {
-    const result = await db.insert(comparisons).values(comparison);
-    return result;
+    return await db.transaction(async (tx) => {
+      // Use createdAt for chronological ordering (exists in schema)
+      const existing = await tx
+        .select({ id: comparisons.id })
+        .from(comparisons)
+        .where(eq(comparisons.anonymousId, params.anonymousId))
+        .orderBy(desc(comparisons.createdAt));
+
+      const excess = existing.length - MAX_COMPARISON_HISTORY + 1;
+      if (excess > 0) {
+        const idsToDelete = existing
+          .slice(-excess)
+          .map((row) => row.id);
+        await tx
+          .delete(comparisons)
+          .where(inArray(comparisons.id, idsToDelete));
+      }
+
+      const [newRow] = await tx
+        .insert(comparisons)
+        .values({
+          userId: params.userId,
+          anonymousId: params.anonymousId,
+          collegeIds: JSON.stringify(params.collegeIds),
+          summary: params.summary,
+          comparisonData: params.comparisonData,
+          llmProvider: params.llmProvider ?? null,
+        })
+        .returning();
+
+      return newRow;
+    });
   } catch (error) {
     console.error("[Database] Failed to create comparison:", error);
     throw error;
