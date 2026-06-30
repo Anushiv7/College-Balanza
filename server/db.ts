@@ -60,6 +60,15 @@ export async function getCollegeByName(name: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export function isCollegeDataFresh(
+  college: { lastUpdated: Date | string | null | undefined },
+  ttlMs: number
+) {
+  if (!college.lastUpdated) return false;
+  const lastUpdated = new Date(college.lastUpdated);
+  return Number.isFinite(lastUpdated.getTime()) && Date.now() - lastUpdated.getTime() < ttlMs;
+}
+
 export async function getAllColleges() {
   const db = await getDb();
   if (!db) return [];

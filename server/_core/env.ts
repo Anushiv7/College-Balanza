@@ -13,6 +13,10 @@ export const ENV = {
     "https://api.openai.com/v1",
   openAiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
 
+  // Optional search providers used by the college data fetcher.
+  serperApiKey: process.env.SERPER_API_KEY ?? "",
+  tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
+
   // Optional override for the anonymous-id cookie name.
   anonCookieName: process.env.ANON_COOKIE_NAME ?? "cb_anon_id",
 };
