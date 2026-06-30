@@ -30,7 +30,8 @@
     "moduleResolution": "bundler",
     "types": [
       "node",
-      "vite/client"
+      "vite/client",
+      "express"
     ],
     "paths": {
       "@/*": [
