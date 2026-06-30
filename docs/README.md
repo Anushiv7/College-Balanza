@@ -11,7 +11,8 @@ College Balanza helps students compare colleges side-by-side using structured da
 The long-term goal is to provide transparent, data-driven college comparisons instead of relying on scattered information across multiple websites.
 
 ## Preview
-(assets/image.png)
+
+![College Balanza Landing Page](assets/image.png)
 
 * **Side-by-side college comparison**
 * **AI-generated comparison summaries**
