@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/dev.ts",
-    "build": "vite build --configLoader runner && vite build --configLoader runner --ssr ../server/_core/dev.ts --outDir ../dist/server",
+    "build": "vite build --configLoader runner && vite build --configLoader runner --ssr ../server/_core/dev.ts --outDir ../dist --emptyOutDir false",
     "build:client": "vite build --configLoader runner",
     "build:dev": "vite build --configLoader runner --mode development",
-    "start": "cross-env NODE_ENV=production node dist/server/dev.js",
+    "start": "cross-env NODE_ENV=production node dist/dev.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
