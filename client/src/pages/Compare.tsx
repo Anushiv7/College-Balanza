@@ -66,27 +66,65 @@ export default function Compare() {
     setSearchInputs(newInputs);
   };
 
+  const fetchCollegeMutation = trpc.colleges.fetchCollegeData.useMutation();
+  const generateComparisonMutation = trpc.colleges.generateComparison.useMutation();
+
   const handleSelectCollege = async (index: number, collegeName: string) => {
     if (!collegeName.trim()) return;
 
     setIsLoading(true);
     try {
-      // In a real app, this would call an API to fetch college data
-      // For now, we'll create a mock college object
-      const mockCollege: SelectedCollege = {
+      // Put a loading/fetching state in the selected list first
+      const loadingCollege: SelectedCollege = {
         name: collegeName,
-        placements: 'Data fetching from web sources...',
-        location: 'Fetching...',
-        facultyReview: 'Fetching...',
-        fees: 'Fetching...',
-        roi: 'Fetching...',
-        industryValue: 'Fetching...',
-        brandValue: 'Fetching...',
-        collegeLife: 'Fetching...',
+        placements: 'Fetching placements data from web...',
+        location: 'Fetching location...',
+        facultyReview: 'Fetching student reviews...',
+        fees: 'Fetching fees and financial aid...',
+        roi: 'Calculating return on investment...',
+        industryValue: 'Analyzing industry placement value...',
+        brandValue: 'Fetching brand value metrics...',
+        collegeLife: 'Fetching campus life insights...',
       };
+      
+      const intermediateSelected = [...selectedColleges];
+      intermediateSelected[index] = loadingCollege;
+      setSelectedColleges(intermediateSelected);
 
+      // Call tRPC backend to fetch real/mock data via the server-side LLM
+      const result = await fetchCollegeMutation.mutateAsync({ collegeName });
+      
+      if (result) {
+        const newSelected = [...selectedColleges];
+        newSelected[index] = {
+          id: result.id,
+          name: result.name,
+          placements: result.placements || 'Data not available',
+          location: result.location || 'Data not available',
+          facultyReview: result.facultyReview || 'Data not available',
+          fees: result.fees || 'Data not available',
+          roi: result.roi || 'Data not available',
+          industryValue: result.industryValue || 'Data not available',
+          brandValue: result.brandValue || 'Data not available',
+          collegeLife: result.collegeLife || 'Data not available',
+        };
+        setSelectedColleges(newSelected);
+      }
+    } catch (err) {
+      console.error("Error fetching college data:", err);
+      const errorCollege: SelectedCollege = {
+        name: collegeName,
+        placements: 'Error fetching. Please try again or verify your API configuration.',
+        location: 'Error fetching',
+        facultyReview: 'Error fetching',
+        fees: 'Error fetching',
+        roi: 'Error fetching',
+        industryValue: 'Error fetching',
+        brandValue: 'Error fetching',
+        collegeLife: 'Error fetching',
+      };
       const newSelected = [...selectedColleges];
-      newSelected[index] = mockCollege;
+      newSelected[index] = errorCollege;
       setSelectedColleges(newSelected);
     } finally {
       setIsLoading(false);
@@ -99,19 +137,32 @@ export default function Compare() {
       return;
     }
 
+    // Ensure all colleges are fully fetched (not in "Fetching..." or empty state)
+    const unFetchedColleges = selectedColleges.filter(
+      c => !c || c.placements?.includes('Fetching') || c.placements?.includes('Error')
+    );
+    if (unFetchedColleges.length > 0) {
+      alert(`Please fetch or press Enter to load data for all colleges before comparing. (Current unfetched: ${unFetchedColleges.map(c => c.name).join(', ')})`);
+      return;
+    }
+
     setIsLoading(true);
+    setSummary('Generating AI-powered comparison summary...');
     try {
-      // This would call an LLM API to generate comparison summary
-      setSummary('Generating AI-powered comparison summary...');
-      // Mock summary for now
-      setTimeout(() => {
-        setSummary(
-          `Based on our analysis of ${selectedColleges.map(c => c.name).join(', ')}, ` +
-          `we found that these institutions offer distinct advantages. ` +
-          `Consider your priorities: if placements are crucial, ${selectedColleges[0]?.name} excels. ` +
-          `For campus life and overall experience, ${selectedColleges[selectedColleges.length - 1]?.name} stands out.`
-        );
-      }, 2000);
+      const collegeIds = selectedColleges.map(c => c.id || 0);
+      const collegeNames = selectedColleges.map(c => c.name);
+
+      const result = await generateComparisonMutation.mutateAsync({
+        collegeIds,
+        collegeNames,
+      });
+
+      if (result?.summary) {
+        setSummary(result.summary);
+      }
+    } catch (err) {
+      console.error("Error generating comparison:", err);
+      setSummary('Failed to generate comparison. Please ensure your Gemini API key is configured.');
     } finally {
       setIsLoading(false);
     }
@@ -186,6 +237,23 @@ export default function Compare() {
                       </Button>
                     )}
                   </div>
+                  {!selectedColleges[index] && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[11px] text-white/40">Suggested:</span>
+                      {["MIT", "Stanford University", "Harvard University"].map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => {
+                            handleSearchInputChange(index, name);
+                            handleSelectCollege(index, name);
+                          }}
+                          className="text-[11px] bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 text-white/60 rounded-full px-2 py-0.5 transition-colors cursor-pointer"
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {selectedColleges[index] && (
                     <div className="mt-2 p-2 bg-accent/10 rounded border border-accent/30">
                       <p className="text-sm text-accent font-semibold">

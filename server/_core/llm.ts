@@ -212,15 +212,45 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-// OpenAI-compatible endpoint. Works with OpenAI, Groq, OpenRouter, Together,
-// vLLM, LM Studio, Ollama (with the /v1 shim) and most other gateways.
-const resolveApiUrl = () => `${ENV.openAiBaseUrl}/chat/completions`;
+let isOpenAiQuotaExceeded = false;
+let isGeminiServiceUnavailable = false;
 
-const assertApiKey = () => {
-  if (!ENV.openAiApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+function determineProvider(): "gemini" | "openai" {
+  if (process.env.GEMINI_API_KEY && !isGeminiServiceUnavailable) {
+    return "gemini";
+  }
+  return "openai";
+}
+
+const assertApiKey = (provider: "gemini" | "openai") => {
+  if (provider === "gemini") {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured in the environment");
+    }
+  } else {
+    if (!ENV.openAiApiKey) {
+      throw new Error("OPENAI_API_KEY is not configured in the environment");
+    }
+    if (isOpenAiQuotaExceeded) {
+      throw new Error("OpenAI requests blocked: OpenAI API key has insufficient quota (429 insufficient_quota)");
+    }
   }
 };
+
+async function checkOpenAiQuotaError(response: Response, provider: "gemini" | "openai") {
+  if (provider === "openai" && (response.status === 429 || response.status === 400)) {
+    try {
+      const clone = response.clone();
+      const bodyText = await clone.text();
+      if (bodyText.includes("insufficient_quota") || bodyText.includes("quota_exceeded")) {
+        console.warn("[LLM] Detected OpenAI insufficient quota (429). Disabling OpenAI requests.");
+        isOpenAiQuotaExceeded = true;
+      }
+    } catch (e) {
+      console.error("Error reading OpenAI error body:", e);
+    }
+  }
+}
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -339,7 +369,18 @@ const fetchWithBackoff = async (
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  let provider = determineProvider();
+
+  try {
+    assertApiKey(provider);
+  } catch (error: any) {
+    if (provider === "gemini" && !process.env.GEMINI_API_KEY && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+      provider = "openai";
+      assertApiKey(provider);
+    } else {
+      throw error;
+    }
+  }
 
   const {
     messages,
@@ -361,7 +402,21 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     messages: messages.map(normalizeMessage),
   };
 
-  payload.model = model ?? ENV.openAiModel;
+  let apiKey: string;
+  let url: string;
+  let targetModel: string;
+
+  if (provider === "gemini") {
+    apiKey = process.env.GEMINI_API_KEY!;
+    url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+    targetModel = (model && model.startsWith("gemini")) ? model : "gemini-2.5-flash";
+  } else {
+    apiKey = ENV.openAiApiKey;
+    url = `${ENV.openAiBaseUrl}/chat/completions`;
+    targetModel = model ?? ENV.openAiModel;
+  }
+
+  payload.model = targetModel;
 
   if (tools && tools.length > 0) {
     payload.tools = tools;
@@ -398,23 +453,40 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetchWithBackoff(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.openAiApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetchWithBackoff(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    if (!response.ok) {
+      await checkOpenAiQuotaError(response, provider);
+
+      if (provider === "gemini" && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+        console.warn(`[LLM] Gemini call failed (${response.status}). Attempting fallback to OpenAI.`);
+        isGeminiServiceUnavailable = true;
+        return await invokeLLM(params);
+      }
+
+      const errorText = await response.text();
+      throw new Error(
+        `LLM invoke failed (${provider}): ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    return (await response.json()) as InvokeResult;
+  } catch (err: any) {
+    if (provider === "gemini" && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+      console.warn("[LLM] Gemini request network error. Attempting fallback to OpenAI:", err);
+      isGeminiServiceUnavailable = true;
+      return await invokeLLM(params);
+    }
+    throw err;
   }
-
-  return (await response.json()) as InvokeResult;
 }
 
 export type ModelInfo = {
@@ -430,20 +502,57 @@ export type ModelsResponse = {
 };
 
 export async function listLLMModels(): Promise<ModelsResponse> {
-  assertApiKey();
+  let provider = determineProvider();
 
-  const url = `${ENV.openAiBaseUrl}/models`;
-
-  const response = await fetchWithBackoff(url, {
-    headers: { authorization: `Bearer ${ENV.openAiApiKey}` },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `List LLM models failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+  try {
+    assertApiKey(provider);
+  } catch (error: any) {
+    if (provider === "gemini" && !process.env.GEMINI_API_KEY && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+      provider = "openai";
+      assertApiKey(provider);
+    } else {
+      throw error;
+    }
   }
 
-  return (await response.json()) as ModelsResponse;
+  let apiKey: string;
+  let url: string;
+
+  if (provider === "gemini") {
+    apiKey = process.env.GEMINI_API_KEY!;
+    url = "https://generativelanguage.googleapis.com/v1beta/openai/models";
+  } else {
+    apiKey = ENV.openAiApiKey;
+    url = `${ENV.openAiBaseUrl}/models`;
+  }
+
+  try {
+    const response = await fetchWithBackoff(url, {
+      headers: { authorization: `Bearer ${apiKey}` },
+    });
+
+    if (!response.ok) {
+      await checkOpenAiQuotaError(response, provider);
+
+      if (provider === "gemini" && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+        console.warn(`[LLM] Gemini list models failed (${response.status}). Attempting fallback to OpenAI.`);
+        isGeminiServiceUnavailable = true;
+        return await listLLMModels();
+      }
+
+      const errorText = await response.text();
+      throw new Error(
+        `List LLM models failed (${provider}): ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    return (await response.json()) as ModelsResponse;
+  } catch (err: any) {
+    if (provider === "gemini" && ENV.openAiApiKey && !isOpenAiQuotaExceeded) {
+      console.warn("[LLM] Gemini list models network error. Attempting fallback to OpenAI:", err);
+      isGeminiServiceUnavailable = true;
+      return await listLLMModels();
+    }
+    throw err;
+  }
 }
