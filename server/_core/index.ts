@@ -1,6 +1,6 @@
 import "dotenv/config";
 import cookieParser from "cookie-parser";
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { anonymousIdMiddleware } from "./middleware/anonymous";
 import { appRouter } from "../routers";
@@ -28,7 +28,7 @@ export function createApp(): Express {
     })
   );
 
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health", (_req: Request, res: Response) => {
     res.json({ ok: true });
   });
 
