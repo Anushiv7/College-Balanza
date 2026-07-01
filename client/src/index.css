@@ -28,40 +28,52 @@
   :root {
     color-scheme: light;
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.6%;
+    --foreground: 0 0% 6%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.6%;
+    --card-foreground: 0 0% 6%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.6%;
+    --popover-foreground: 0 0% 6%;
     --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 262 80% 50%;
-    --accent-foreground: 0 0% 100%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 45 65% 47%;
+    --accent-foreground: 0 0% 6%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 262 80% 50%;
-    --radius: 0.5rem;
+    --ring: 45 65% 47%;
+    --radius: 0.65rem;
+
+    /* College Balanza — brand tokens (available in both themes) */
+    --cb-bg: #080808;
+    --cb-surface-1: #111111;
+    --cb-surface-2: #171717;
+    --cb-card: #1B1B1B;
+    --cb-gold: #D4AF37;
+    --cb-gold-strong: #C9A227;
+    --cb-gold-muted: #9A7B20;
+    --cb-gold-soft: rgba(212, 175, 55, 0.14);
+    --cb-border-gold: rgba(201, 162, 39, 0.28);
+    --cb-shadow-gold: 0 20px 60px -30px rgba(212, 175, 55, 0.4);
   }
 
   .dark {
     color-scheme: dark;
-    --background: 262 30% 8%;
-    --foreground: 0 0% 100%;
-    --card: 262 30% 12%;
-    --card-foreground: 0 0% 100%;
-    --popover: 262 30% 12%;
-    --popover-foreground: 0 0% 100%;
-    --muted: 262 30% 20%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 262 80% 60%;
-    --accent-foreground: 262 30% 8%;
+    --background: 0 0% 3.1%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 10.6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 6.7%;
+    --popover-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 66%;
+    --accent: 45 65% 52%;
+    --accent-foreground: 0 0% 6%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 262 30% 8%;
-    --border: 262 30% 20%;
-    --input: 262 30% 20%;
-    --ring: 262 80% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 45 65% 52%;
   }
 
   body {
@@ -107,9 +119,9 @@
     @apply text-lg md:text-xl text-muted-foreground font-light;
   }
 
-  /* Gradient text utility */
+  /* Gradient text utility — brand gold */
   .gradient-text {
-    background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #E7C558 0%, #D4AF37 45%, #9A7B20 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -117,44 +129,43 @@
 
   /* Floating animation */
   @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-14px); }
   }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-float-slow { animation: float 8s ease-in-out infinite; }
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  /* Smooth fade-in animation */
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
+  .animate-fade-in { animation: fadeIn 0.5s ease-out; }
 
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
+  @keyframes cbFadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
   }
+  .cb-float-card { animation: cbFadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
 }
 
-/* Immersive gradient background */
+/* Immersive brand background — black + gold ambient glow */
 html {
   scroll-behavior: smooth;
-  background: linear-gradient(135deg, #f5f3ff 0%, #e8f4f8 50%, #e8f5f1 100%);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(212, 175, 55, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 10%, rgba(201, 162, 39, 0.05), transparent 60%),
+    linear-gradient(180deg, #f8f6ee 0%, #f4f1e6 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
 html.dark {
-  background: linear-gradient(135deg, #1a0a3e 0%, #0f2c4a 50%, #0a4d3c 100%);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(212, 175, 55, 0.10), transparent 60%),
+    radial-gradient(900px 500px at 100% 10%, rgba(154, 123, 32, 0.08), transparent 60%),
+    linear-gradient(180deg, #080808 0%, #0c0c0c 60%, #080808 100%);
 }
+
 
 /* Light mode: components hardcode text-white for the dark gradient backdrop.
    Remap those utilities to readable foreground colors when .dark is absent. */
